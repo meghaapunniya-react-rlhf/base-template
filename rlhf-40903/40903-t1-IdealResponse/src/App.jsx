@@ -1,84 +1,246 @@
 import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
-const StyleControls = ({ onStyleChange }) => {
-  const [fontSize, setFontSize] = useState(16);
-  const [textColor, setTextColor] = useState("#000000");
-  const [bgColor, setBgColor] = useState("#ffffff");
-  const [isBold, setIsBold] = useState(false);
+const StyleControls = ({ onStyleChange, onBackgroundChange }) => {
+  const [selectedElement, setSelectedElement] = useState("text");
+  const [styles, setStyles] = useState({
+    text: { fontSize: 16, color: "#000000", fontWeight: "normal", textAlign: "left", verticalAlign: "baseline" },
+    heading: { fontSize: 24, color: "#000000", fontWeight: "bold", textAlign: "left", verticalAlign: "baseline" },
+    image: { width: "100%", maxHeight: "300px", display: "block", margin: "auto" },
+    video: { width: "100%", maxHeight: "300px", display: "block", margin: "auto" },
+  });
+  const [backgroundColor, setBackgroundColor] = useState("#ffffff");
+  const [backgroundImage, setBackgroundImage] = useState("");
 
   const handleStyleChange = (property, value) => {
-    onStyleChange(property, value);
-    switch (property) {
-      case "fontSize":
-        setFontSize(value);
-        break;
-      case "color":
-        setTextColor(value);
-        break;
-      case "backgroundColor":
-        setBgColor(value);
-        break;
-      case "fontWeight":
-        setIsBold(value);
-        break;
+    setStyles(prevStyles => ({
+      ...prevStyles,
+      [selectedElement]: {
+        ...prevStyles[selectedElement],
+        [property]: value
+      }
+    }));
+    onStyleChange(selectedElement, property, value);
+  };
+
+  const handleBackgroundColorChange = (color) => {
+    setBackgroundColor(color);
+    onBackgroundChange({ color });
+  };
+
+  const handleBackgroundImageChange = (image) => {
+    setBackgroundImage(image);
+    onBackgroundChange({ image });
+  };
+
+  const renderControls = () => {
+    switch (selectedElement) {
+      case "text":
+      case "heading":
+        return (
+          <>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="fontSize" className="text-sm font-medium">Font Size</Label>
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    id="fontSize"
+                    min={12}
+                    max={48}
+                    step={1}
+                    value={[styles[selectedElement].fontSize]}
+                    onValueChange={(value) => handleStyleChange("fontSize", value[0])}
+                    className="flex-grow"
+                  />
+                  <span className="text-sm font-medium w-12 text-right">{styles[selectedElement].fontSize}px</span>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="color"
+                    type="color"
+                    value={styles[selectedElement].color}
+                    onChange={(e) => handleStyleChange("color", e.target.value)}
+                    className="w-12 h-10 p-1 rounded-md"
+                  />
+                  <Input
+                    type="text"
+                    value={styles[selectedElement].color}
+                    onChange={(e) => handleStyleChange("color", e.target.value)}
+                    className="flex-grow"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="bold-mode"
+                  checked={styles[selectedElement].fontWeight === "bold"}
+                  onCheckedChange={(checked) =>
+                    handleStyleChange("fontWeight", checked ? "bold" : "normal")
+                  }
+                />
+                <Label htmlFor="bold-mode" className="text-sm font-medium">Bold</Label>
+              </div>
+              <div>
+                <Label htmlFor="textAlign" className="text-sm font-medium">Horizontal Alignment</Label>
+                <Select
+                  id="textAlign"
+                  onValueChange={(value) => handleStyleChange("textAlign", value)}
+                  defaultValue={styles[selectedElement].textAlign}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select alignment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                    <SelectItem value="justify">Justify</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="verticalAlign" className="text-sm font-medium">Vertical Alignment</Label>
+                <Select
+                  id="verticalAlign"
+                  onValueChange={(value) => handleStyleChange("verticalAlign", value)}
+                  defaultValue={styles[selectedElement].verticalAlign}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select vertical alignment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baseline">Baseline</SelectItem>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="middle">Middle</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        );
+      case "image":
+      case "video":
+        return (
+          <>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="width" className="text-sm font-medium">Width</Label>
+                <Input
+                  id="width"
+                  type="text"
+                  value={styles[selectedElement].width}
+                  onChange={(e) => handleStyleChange("width", e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Label htmlFor="maxHeight" className="text-sm font-medium">Max Height</Label>
+                <Input
+                  id="maxHeight"
+                  type="text"
+                  value={styles[selectedElement].maxHeight}
+                  onChange={(e) => handleStyleChange("maxHeight", e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Label htmlFor="alignment" className="text-sm font-medium">Alignment</Label>
+                <Select
+                  id="alignment"
+                  onValueChange={(value) => {
+                    handleStyleChange("display", "block");
+                    if (value === "center") {
+                      handleStyleChange("margin", "auto");
+                    } else if (value === "right") {
+                      handleStyleChange("margin", "0 0 0 auto");
+                    } else {
+                      handleStyleChange("margin", "0");
+                    }
+                  }}
+                  defaultValue={styles[selectedElement].margin === "auto" ? "center" : 
+                                styles[selectedElement].margin === "0 0 0 auto" ? "right" : "left"}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select alignment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="left">Left</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="right">Right</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </>
+        );
+      default:
+        return null;
     }
   };
 
   return (
-    <Card className="p-4 space-y-4">
-      <CardContent>
-        <h3 className="text-lg font-semibold mb-2">Style Controls</h3>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Style Controls</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <Label htmlFor="elementSelect" className="text-sm font-medium">Element to Style</Label>
+          <Select id="elementSelect" onValueChange={setSelectedElement} defaultValue={selectedElement}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select element to style" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="text">Text</SelectItem>
+              <SelectItem value="heading">Heading</SelectItem>
+              <SelectItem value="image">Image</SelectItem>
+              <SelectItem value="video">Video</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Separator />
+        {renderControls()}
+        <Separator />
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Font Size</label>
-            <Slider
-              min={12}
-              max={24}
-              step={1}
-              value={[fontSize]}
-              onValueChange={(value) => handleStyleChange("fontSize", value[0])}
-            />
-            <span className="text-sm">{fontSize}px</span>
+            <Label htmlFor="backgroundColor" className="text-sm font-medium">Background Color</Label>
+            <div className="flex items-center space-x-2">
+              <Input
+                id="backgroundColor"
+                type="color"
+                value={backgroundColor}
+                onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                className="w-12 h-10 p-1 rounded-md"
+              />
+              <Input
+                type="text"
+                value={backgroundColor}
+                onChange={(e) => handleBackgroundColorChange(e.target.value)}
+                className="flex-grow"
+              />
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Text Color</label>
+            <Label htmlFor="backgroundImage" className="text-sm font-medium">Background Image URL</Label>
             <Input
-              type="color"
-              value={textColor}
-              onChange={(e) => handleStyleChange("color", e.target.value)}
-              className="w-full h-10"
+              id="backgroundImage"
+              type="text"
+              value={backgroundImage}
+              onChange={(e) => handleBackgroundImageChange(e.target.value)}
+              placeholder="Enter image URL"
+              className="w-full"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Background Color
-            </label>
-            <Input
-              type="color"
-              value={bgColor}
-              onChange={(e) =>
-                handleStyleChange("backgroundColor", e.target.value)
-              }
-              className="w-full h-10"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="bold-mode"
-              checked={isBold}
-              onCheckedChange={(checked) =>
-                handleStyleChange("fontWeight", checked ? "bold" : "normal")
-              }
-            />
-            <label htmlFor="bold-mode" className="text-sm font-medium">
-              Bold Text
-            </label>
           </div>
         </div>
       </CardContent>
@@ -88,114 +250,115 @@ const StyleControls = ({ onStyleChange }) => {
 
 const MarkdownEditor = ({ markdown, setMarkdown }) => (
   <textarea
-    className="w-full h-full p-4 border rounded-md shadow focus:outline-none focus:ring focus:ring-blue-300 resize-none"
+    className="w-full h-full p-4 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono"
     value={markdown}
     onChange={(e) => setMarkdown(e.target.value)}
     placeholder="Type your markdown here..."
   />
 );
 
-const MarkdownPreview = ({ markdown, customStyles }) => {
+const MarkdownPreview = ({ markdown, customStyles,background }) => {
   const parseMarkdown = (text) => {
+    const headingStyle = `font-size: ${customStyles.heading.fontSize}px; color: ${customStyles.heading.color}; font-weight: ${customStyles.heading.fontWeight}; text-align: ${customStyles.heading.textAlign}; vertical-align: ${customStyles.heading.verticalAlign};`;
+    const textStyle = `font-size: ${customStyles.text.fontSize}px; color: ${customStyles.text.color}; font-weight: ${customStyles.text.fontWeight}; text-align: ${customStyles.text.textAlign}; vertical-align: ${customStyles.text.verticalAlign};`;
+    const imageStyle = `width: ${customStyles.image.width}; max-height: ${customStyles.image.maxHeight}; object-fit: contain; display: ${customStyles.image.display}; margin: ${customStyles.image.margin};`;
+    const videoStyle = `width: ${customStyles.video.width}; max-height: ${customStyles.video.maxHeight}; display: ${customStyles.video.display}; margin: ${customStyles.video.margin};`;
+
     return text
-      .replace(
-        /^###### (.*$)/gim,
-        '<h6 class="text-sm font-bold mb-2">$1</h6>'
-      )
-      .replace(
-        /^##### (.*$)/gim,
-        '<h5 class="text-base font-bold mb-2">$1</h5>'
-      )
-      .replace(/^#### (.*$)/gim, '<h4 class="text-lg font-bold mb-2">$1</h4>')
-      .replace(
-        /^### (.*$)/gim,
-        '<h3 class="text-xl font-bold mb-2">$1</h3>'
-      )
-      .replace(
-        /^## (.*$)/gim,
-        '<h2 class="text-2xl font-bold mb-2">$1</h2>'
-      )
-      .replace(
-        /^# (.*$)/gim,
-        '<h1 class="text-3xl font-bold mb-2">$1</h1>'
-      )
-      .replace(/\*\*\*(.*?)\*\*\*/gim, "<strong><em>$1</em></strong>")
-      .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
-      .replace(/\*(.*?)\*/gim, "<em>$1</em>")
-      .replace(/~~(.*?)~~/gim, "<del>$1</del>")
-      .replace(
-        /\[(.*?)\]\((.*?)\)/gim,
-        '<a href="$2" class="text-blue-600 underline">$1</a>'
-      )
-      .replace(
-        /`(.*?)`/gim,
-        '<code class="bg-gray-200 text-red-500 p-1 rounded">$1</code>'
-      )
-      .replace(
-        /^\> (.*$)/gim,
-        '<blockquote class="border-l-4 border-gray-300 pl-4 italic text-gray-600">$1</blockquote>'
-      )
-      .replace(
-        /^\s*[\*\-]\s(.*$)/gim,
-        '<ul class="list-disc ml-6"><li>$1</li></ul>'
-      )
-      .replace(
-        /^\d+\.\s(.*$)/gim,
-        '<ol class="list-decimal ml-6"><li>$1</li></ol>'
-      )
-      .replace(
-        /^---$/gim,
-        '<hr class="my-4 border-t-2 border-gray-300"/>'
-      )
-      .replace(
-        /!\[(.*?)\]\((.*?)\)/gim,
-        '<img src="$2" alt="$1" class="my-2 max-w-full h-auto"/>'
-      )
-      .replace(
-        /!\{(.*?)\}\((.*?)\)/gim,
-        '<video controls src="$2" class="my-2 max-w-full h-auto">$1</video>'
-      )
-      .replace(/\n$/gim, "<br/>");
+      .replace(/!\[(.*?)\]\((.*?)\)/gim, (match, alt, src) => {
+        const isValidSrc = src && (src.startsWith('http') || src.startsWith('/') || src.startsWith('./') || src.startsWith('../'));
+        return isValidSrc
+          ? `<img src="${src}" alt="${alt}" style="${imageStyle}" />`
+          : match;
+      })
+      .replace(/^###### (.*$)/gim, `<h6 style="${headingStyle}">$1</h6>`)
+      .replace(/^##### (.*$)/gim, `<h5 style="${headingStyle}">$1</h5>`)
+      .replace(/^#### (.*$)/gim, `<h4 style="${headingStyle}">$1</h4>`)
+      .replace(/^### (.*$)/gim, `<h3 style="${headingStyle}">$1</h3>`)
+      .replace(/^## (.*$)/gim, `<h2 style="${headingStyle}">$1</h2>`)
+      .replace(/^# (.*$)/gim, `<h1 style="${headingStyle}">$1</h1>`)
+      .replace(/\*\*\*(.*?)\*\*\*/gim, `<strong><em style="${textStyle}">$1</em></strong>`)
+      .replace(/\*\*(.*?)\*\*/gim, `<strong style="${textStyle}">$1</strong>`)
+      .replace(/\*(.*?)\*/gim, `<em style="${textStyle}">$1</em>`)
+      .replace(/~~(.*?)~~/gim, `<del style="${textStyle}">$1</del>`)
+      .replace(/\[(.*?)\]\((.*?)\)/gim, `<a href="$2" style="${textStyle}" class="text-blue-600 hover:underline">$1</a>`)
+      .replace(/`(.*?)`/gim, `<code style="${textStyle}" class="bg-gray-100 text-red-500 px-1 rounded">$1</code>`)
+      .replace(/^\> (.*$)/gim, `<blockquote style="${textStyle}" class="border-l-4 border-gray-300 pl-4 italic text-gray-600">$1</blockquote>`)
+      .replace(/^\s*[\*\-]\s(.*$)/gim, `<ul class="list-disc ml-6"><li style="${textStyle}">$1</li></ul>`)
+      .replace(/^\d+\.\s(.*$)/gim, `<ol class="list-decimal ml-6"><li style="${textStyle}">$1</li></ol>`)
+      .replace(/^---$/gim, '<hr class="my-4 border-t-2 border-gray-300"/>')
+      .replace(/!\{(.*?)\}\((.*?)\)/gim, `<video controls src="$2" style="${videoStyle}">$1</video>`)
+      .replace(/\n$/gim, "<br/>")
+      .replace(/([^>]\n)(?=[^<])/g, `$1<p style="${textStyle}">`)
+      .replace(/([^>]\n)(?=[^<])/g, "$1</p>");
+  };
+
+  const containerStyle = {
+    backgroundColor: background.color || '#ffffff',
+    backgroundImage: background.image ? `url(${background.image})` : 'none',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
   };
 
   return (
     <div
-      className="markdown-preview h-full p-4 border rounded-md shadow overflow-auto"
-      style={customStyles}
-      dangerouslySetInnerHTML={{ __html: parseMarkdown(markdown) }}
-    />
+      className="markdown-preview h-full p-4 border rounded-md shadow-sm overflow-auto"
+      style={containerStyle}
+    >
+      <div dangerouslySetInnerHTML={{ __html: parseMarkdown(markdown) }} />
+    </div>
   );
 };
 
 export default function App() {
   const [markdown, setMarkdown] = useState("");
-  const [customStyles, setCustomStyles] = useState({});
+  const [customStyles, setCustomStyles] = useState({
+    text: { fontSize: 16, color: "#000000", fontWeight: "normal", textAlign: "left", verticalAlign: "baseline" },
+    heading: { fontSize: 24, color: "#000000", fontWeight: "bold", textAlign: "left", verticalAlign: "baseline" },
+    image: { width: "100%", maxHeight: "300px", display: "block", margin: "auto" },
+    video: { width: "100%", maxHeight: "300px", display: "block", margin: "auto" },
+  });
+  const [background, setBackground] = useState({ color: "#ffffff", image: "" });
 
-  const handleStyleChange = (property, value) => {
-    setCustomStyles((prevStyles) => ({
+  const handleStyleChange = (element, property, value) => {
+    setCustomStyles(prevStyles => ({
       ...prevStyles,
-      [property]: value,
+      [element]: {
+        ...prevStyles[element],
+        [property]: value
+      }
     }));
   };
 
+  const handleBackgroundChange = (newBackground) => {
+    setBackground(prevBackground => ({ ...prevBackground, ...newBackground }));
+  };
+
   return (
-    <div className="flex flex-col sm:flex-row h-screen bg-white text-gray-900">
-      <div className="w-full sm:w-1/4 p-4 bg-gray-100">
-        <StyleControls onStyleChange={handleStyleChange} />
+    <div className="flex flex-col sm:flex-row h-screen bg-gray-50 text-gray-900">
+      <div className="w-full sm:w-1/4 p-4 overflow-auto">
+        <StyleControls onStyleChange={handleStyleChange} onBackgroundChange={handleBackgroundChange} />
       </div>
       <div className="w-full sm:w-3/4 p-4">
-        <Tabs defaultValue="editor" className="w-full h-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="editor">Editor</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-          </TabsList>
-          <TabsContent value="editor" className="h-[calc(100%-40px)]">
-            <MarkdownEditor markdown={markdown} setMarkdown={setMarkdown} />
-          </TabsContent>
-          <TabsContent value="preview" className="h-[calc(100%-40px)]">
-            <MarkdownPreview markdown={markdown} customStyles={customStyles} />
-          </TabsContent>
-        </Tabs>
+        <Card className="h-full">
+          <CardContent className="p-0">
+            <Tabs defaultValue="editor" className="w-full h-full">
+              <TabsList className="w-full">
+                <TabsTrigger value="editor" className="w-1/2">Editor</TabsTrigger>
+                <TabsTrigger value="preview" className="w-1/2">Preview</TabsTrigger>
+              </TabsList>
+              <div className="p-4 h-[calc(100%-40px)]">
+                <TabsContent value="editor" className="h-full">
+                  <MarkdownEditor markdown={markdown} setMarkdown={setMarkdown} />
+                </TabsContent>
+                <TabsContent value="preview" className="h-full">
+                  <MarkdownPreview markdown={markdown} customStyles={customStyles} background={background} />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
