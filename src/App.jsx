@@ -1,101 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Button, Input, Select, SelectItem, Switch, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
-import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, Italic, Underline, Image, Video, TypeH1, TypeH2, TypeH3 } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 
-const Editor = ({ markdown, setMarkdown, style, setStyle }) => (
-  <div className="flex-1 p-4 border-r border-gray-200">
-    <textarea
-      value={markdown}
-      onChange={(e) => setMarkdown(e.target.value)}
-      className="w-full h-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-      style={{ fontFamily: style.fontFamily, fontSize: `${style.fontSize}px` }}
-    />
-  </div>
-);
+function ComicFrame({ frame, index, selectFrame, deleteFrame, updateFrame }) {
+  const [isDrawing, setIsDrawing] = useState(false);
+  const canvasRef = useRef(null);
 
-const StyleControls = ({ style, setStyle }) => (
-  <Card className="w-64 p-4 space-y-4">
-    <CardHeader>
-      <CardTitle>Style Controls</CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div>
-        <label>Font Size:</label>
-        <Input type="number" value={style.fontSize} onChange={e => setStyle({...style, fontSize: e.target.value})} />
-      </div>
-      <div>
-        <label>Font Color:</label>
-        <Input type="color" value={style.color} onChange={e => setStyle({...style, color: e.target.value})} />
-      </div>
-      <div>
-        <label>Font Weight:</label>
-        <Select value={style.fontWeight} onValueChange={value => setStyle({...style, fontWeight: value})}>
-          <SelectItem value="normal">Normal</SelectItem>
-          <SelectItem value="bold">Bold</SelectItem>
-        </Select>
-      </div>
-      <div>
-        <label>Text Alignment:</label>
-        <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => setStyle({...style, textAlign: 'left'})}>
-            <AlignLeft />
-          </Button>
-          <Button variant="outline" onClick={() => setStyle({...style, textAlign: 'center'})}>
-            <AlignCenter />
-          </Button>
-          <Button variant="outline" onClick={() => setStyle({...style, textAlign: 'right'})}>
-            <AlignRight />
-          </Button>
-          <Button variant="outline" onClick={() => setStyle({...style, textAlign: 'justify'})}>
-            <AlignJustify />
-          </Button>
-        </div>
-      </div>
-      <div>
-        <label>Background Color:</label>
-        <Input type="color" value={style.backgroundColor} onChange={e => setStyle({...style, backgroundColor: e.target.value})} />
-      </div>
-      <div>
-        <Switch checked={style.useBackgroundImage} onCheckedChange={checked => setStyle({...style, useBackgroundImage: checked})}>
-          Use Background Image
-        </Switch>
-        {style.useBackgroundImage && <Input type="text" placeholder="Enter image URL" onChange={e => setStyle({...style, backgroundImage: e.target.value})} />}
-      </div>
-    </CardContent>
-  </Card>
-);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    if (frame.image) {
+      const img = new Image();
+      img.onload = () => context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.src = frame.image;
+    }
+    // Draw existing paths
+    frame.paths.forEach(path => {
+      context.beginPath();
+      path.forEach((point, i) => {
+        if (i === 0) context.moveTo(point.x, point.y);
+        else context.lineTo(point.x, point.y);
+      });
+      context.strokeStyle = path.color;
+      context.lineWidth = path.width;
+      context.stroke();
+    });
+  }, [frame]);
 
-const Preview = ({ markdown, style }) => (
-  <div className="flex-1 p-4" style={{...style, backgroundImage: style.useBackgroundImage ? `url(${style.backgroundImage})` : 'none'}}>
-    <ReactMarkdown>{markdown}</ReactMarkdown>
-  </div>
-);
+  const handleMouseDown = (e) => {
+    if (!isDrawing) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newPath = [{ x, y }];
+    updateFrame(index, { paths: [...frame.paths, { color: '#000', width: 2, data: newPath }] });
+    const context = canvasRef.current.getContext('2d');
+    context.beginPath();
+    context.moveTo(x, y);
+  };
 
-export default function App() {
-  const [view, setView] = useState('Editor');
-  const [markdown, setMarkdown] = useState('Write your **email** here...');
-  const [style, setStyle] = useState({
-    fontSize: 16,
-    color: '#000000',
-    fontWeight: 'normal',
-    textAlign: 'left',
-    backgroundColor: '#ffffff',
-    useBackgroundImage: false,
-    backgroundImage: ''
-  });
+  const handleMouseMove = (e) => {
+    if (!isDrawing) return;
+    const rect = e.target.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const context = canvasRef.current.getContext('2d');
+    const paths = [...frame.paths];
+    const currentPath = paths[paths.length - 1];
+    currentPath.data.push({ x, y });
+    updateFrame(index, { paths });
+    context.lineTo(x, y);
+    context.stroke();
+  };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-100 sm:flex-row">
-      <StyleControls style={style} setStyle={setStyle} />
-      <div className="flex flex-col flex-1">
-        <div className="flex justify-center p-4 bg-white shadow-md">
-          <Button onClick={() => setView('Editor')}>Editor</Button>
-          <Button onClick={() => setView('Preview')} className="ml-2">Preview</Button>
-        </div>
-        {view === 'Editor' ? 
-          <Editor markdown={markdown} setMarkdown={setMarkdown} style={style} setStyle={setStyle} /> : 
-          <Preview markdown={markdown} style={style} />}
+    <Card className={`border-2 ${frame.selected ? 'border-blue-500' : 'border-gray-300'} m-2`} onClick={() => selectFrame(index)}>
+      <CardHeader>
+        <canvas 
+          ref={canvasRef} 
+          width={300} 
+          height={200}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={() => setIsDrawing(false)}
+          onMouseLeave={() => setIsDrawing(false)}
+          className="border border-gray-400 bg-white"
+        />
+      </CardHeader>
+      <CardContent>
+        <Input 
+          value={frame.dialogue} 
+          onChange={e => updateFrame(index, { dialogue: e.target.value })} 
+          placeholder="Enter dialogue..."
+        />
+      </CardContent>
+      <CardFooter>
+        <Button onClick={(e) => { e.stopPropagation(); deleteFrame(index); }}>Delete</Button>
+        <Switch checked={isDrawing} onCheckedChange={(checked) => setIsDrawing(checked)}>Draw</Switch>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export default function App() {
+  const [frames, setFrames] = useState([{ paths: [], dialogue: '', image: '', selected: true, background: 'bg-blue-200' }]);
+  const [assetUrl, setAssetUrl] = useState('');
+  const [currentTool, setCurrentTool] = useState('asset');
+
+  const selectFrame = (index) => {
+    setFrames(prev => prev.map((f, i) => ({...f, selected: i === index})));
+  };
+
+  const addFrame = () => {
+    setFrames(prev => [...prev, { paths: [], dialogue: '', image: '', selected: false, background: 'bg-blue-200' }]);
+  };
+
+  const deleteFrame = (index) => {
+    if (frames.length > 1) {
+      setFrames(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateFrame = (index, updates) => {
+    setFrames(prev => prev.map((frame, i) => i === index ? { ...frame, ...updates } : frame));
+  };
+
+  const exportComic = () => {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute('width', '1000');
+    svg.setAttribute('height', '300');
+    frames.forEach((frame, i) => {
+      const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      rect.setAttribute('x', i * 310);
+      rect.setAttribute('y', '0');
+      rect.setAttribute('width', '300');
+      rect.setAttribute('height', '200');
+      rect.setAttribute('fill', frame.background.replace('bg-', ''));
+      svg.appendChild(rect);
+      // Add logic to draw paths, text, and images here
+    });
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svg);
+    const blob = new Blob([source], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'comic_strip.svg';
+    a.click();
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4 space-y-4 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold">Comic Strip Creator</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {frames.map((frame, index) => (
+          <ComicFrame 
+            key={index} 
+            frame={frame} 
+            index={index} 
+            selectFrame={selectFrame} 
+            deleteFrame={deleteFrame} 
+            updateFrame={updateFrame}
+          />
+        ))}
+      </div>
+      <div className="flex space-x-2">
+        <Button onClick={addFrame}>Add Frame</Button>
+        <Button onClick={exportComic}>Export as SVG</Button>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Switch checked={currentTool === 'draw'} onCheckedChange={(checked) => setCurrentTool(checked ? 'draw' : 'asset')}>Draw Mode</Switch>
+        {currentTool === 'asset' && (
+          <>
+            <Input 
+              value={assetUrl} 
+              onChange={e => setAssetUrl(e.target.value)} 
+              placeholder="Enter image URL"
+            />
+            <Button onClick={() => {
+              const selectedFrame = frames.findIndex(f => f.selected);
+              if (selectedFrame !== -1) {
+                updateFrame(selectedFrame, { image: assetUrl });
+                setAssetUrl('');
+              }
+            }}>Add Asset</Button>
+            <Button onClick={() => {
+              const selectedFrame = frames.findIndex(f => f.selected);
+              if (selectedFrame !== -1) {
+                updateFrame(selectedFrame, { background: 'bg-blue-200' });
+              }
+            }} className="bg-blue-200">Blue</Button>
+            <Button onClick={() => {
+              const selectedFrame = frames.findIndex(f => f.selected);
+              if (selectedFrame !== -1) {
+                updateFrame(selectedFrame, { background: 'bg-green-200' });
+              }
+            }} className="bg-green-200">Green</Button>
+            <Button onClick={() => {
+              const selectedFrame = frames.findIndex(f => f.selected);
+              if (selectedFrame !== -1) {
+                updateFrame(selectedFrame, { background: 'bg-red-200' });
+              }
+            }} className="bg-red-200">Red</Button>
+          </>
+        )}
       </div>
     </div>
   );
