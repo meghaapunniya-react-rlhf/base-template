@@ -30,47 +30,47 @@ const AssetLibrary = ({ onSelectAsset }) => {
   };
 
   return (
-    
-        <Tabs defaultValue="backgrounds">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
-            <TabsTrigger value="characters">Characters</TabsTrigger>
-          </TabsList>
-          <TabsContent value="backgrounds">
-            <div className="grid grid-cols-3 gap-2">
-              {presetBackgrounds.map((bg) => (
-                <div
-                  key={bg.id}
-                  className={`w-full h-12 ${bg.color} cursor-pointer`}
-                  onClick={() => onSelectAsset("background", bg)}
-                ></div>
-              ))}
+
+    <Tabs defaultValue="backgrounds">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
+        <TabsTrigger value="characters">Characters</TabsTrigger>
+      </TabsList>
+      <TabsContent value="backgrounds">
+        <div className="grid grid-cols-3 gap-2">
+          {presetBackgrounds.map((bg) => (
+            <div
+              key={bg.id}
+              className={`w-full h-12 ${bg.color} cursor-pointer`}
+              onClick={() => onSelectAsset("background", bg)}
+            ></div>
+          ))}
+        </div>
+      </TabsContent>
+      <TabsContent value="characters">
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {presetCharacters.map((char) => (
+            <div
+              key={char.id}
+              className="w-full h-12 flex items-center justify-center text-2xl cursor-pointer"
+              onClick={() => onSelectAsset("character", char)}
+            >
+              {char.content}
             </div>
-          </TabsContent>
-          <TabsContent value="characters">
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {presetCharacters.map((char) => (
-                <div
-                  key={char.id}
-                  className="w-full h-12 flex items-center justify-center text-2xl cursor-pointer"
-                  onClick={() => onSelectAsset("character", char)}
-                >
-                  {char.content}
-                </div>
-              ))}
-            </div>
-            <form onSubmit={handleCustomImageSubmit}>
-              <Input
-                type="url"
-                placeholder="Enter image URL"
-                value={customImageUrl}
-                onChange={(e) => setCustomImageUrl(e.target.value)}
-                className="mb-2"
-              />
-              <Button type="submit">Add Custom Image</Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+          ))}
+        </div>
+        <form onSubmit={handleCustomImageSubmit}>
+          <Input
+            type="url"
+            placeholder="Enter image URL"
+            value={customImageUrl}
+            onChange={(e) => setCustomImageUrl(e.target.value)}
+            className="mb-2"
+          />
+          <Button type="submit">Add Custom Image</Button>
+        </form>
+      </TabsContent>
+    </Tabs>
   );
 };
 
@@ -288,7 +288,7 @@ export default function App() {
   const handleExport = () => {
     if (comicRef.current) {
       const svgData = new XMLSerializer().serializeToString(comicRef.current);
-      const svgBlob = new Blob([svgData], {type:"image/svg+xml;charset=utf-8"});
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
       const svgUrl = URL.createObjectURL(svgBlob);
       const downloadLink = document.createElement("a");
       downloadLink.href = svgUrl;
@@ -304,7 +304,7 @@ export default function App() {
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.strokeStyle = drawingTool === 'eraser' ? '#e5e7eb' : '#000000';
-    
+
     if (isDrawing) {
       ctx.lineTo(x, y);
       ctx.stroke();
@@ -426,9 +426,8 @@ export default function App() {
                 {frames.map((frame, index) => (
                   <Card
                     key={frame.id}
-                    className={`cursor-pointer transition-all duration-200 ${
-                      selectedFrame === index ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
-                    }`}
+                    className={`cursor-pointer transition-all duration-200 ${selectedFrame === index ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
+                      }`}
                     onClick={() => setSelectedFrame(index)}
                   >
                     <CardContent className="p-2">
@@ -445,17 +444,34 @@ export default function App() {
               </div>
             </CardContent>
           </Card>
-          <div className="flex justify-around mb-6">
-            <Button onClick={addFrame} className="bg-green-500 hover:bg-green-600">Add Frame</Button>
+          <div className="flex flex-col sm:flex-row justify-around mb-6">
+            <Button onClick={addFrame} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 mb-2 sm:mb-0">Add Frame</Button>
             {frames.length > 1 && (
-              <Button onClick={() => removeFrame(selectedFrame)} variant="destructive" className="bg-red-500 hover:bg-red-600">
+              <Button
+                onClick={() => removeFrame(selectedFrame)}
+                variant="destructive"
+                className="w-full sm:w-auto bg-red-500 hover:bg-red-600 mb-2 sm:mb-0"
+              >
                 Remove Frame
               </Button>
             )}
-            <Button onClick={handleExport} className="bg-purple-500 hover:bg-purple-600">Export</Button>
-            <Button onClick={handleUndo} disabled={historyIndex === 0} className="bg-yellow-500 hover:bg-yellow-600">Undo</Button>
-            <Button onClick={handleRedo} disabled={historyIndex === history.length - 1} className="bg-yellow-500 hover:bg-yellow-600">Redo</Button>
+            <Button onClick={handleExport} className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 mb-2 sm:mb-0">Export</Button>
+            <Button
+              onClick={handleUndo}
+              disabled={historyIndex === 0}
+              className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 mb-2 sm:mb-0"
+            >
+              Undo
+            </Button>
+            <Button
+              onClick={handleRedo}
+              disabled={historyIndex === history.length - 1}
+              className="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 mb-2 sm:mb-0"
+            >
+              Redo
+            </Button>
           </div>
+
           {editMode === "asset" && (
             <Card>
               <CardHeader>
