@@ -1,242 +1,299 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Toast } from "@/components/ui/toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-// Water Glass Component
-const WaterGlass = ({ level, color, glassSize }) => {
-  const baseWidth = glassSize * 0.5; // Base width as a fraction of glass size
-  const baseHeight = glassSize === 200? glassSize * 0.55 : glassSize === 300? glassSize * 0.65 : glassSize * 0.75; // Base height as a fraction of glass size
-  const scaleFactor = Math.cbrt(glassSize / 200); // Optional scale factor for future adjustments
-  const width = baseWidth * scaleFactor;
-  const height = baseHeight * scaleFactor;
-
-  return (
-    <svg className="w-32 h-48 mx-auto mb-4" viewBox={`0 0 ${width} ${height}`}>
-      <defs>
-        <clipPath id="glass-mask">
-          <path d={`M${width * 0.1} ${height * 0.067} L${width * 0.9} ${height * 0.067} L${width * 0.8} ${height * 0.933} Q${width * 0.8} ${height} ${width * 0.7} ${height} L${width * 0.3} ${height} Q${width * 0.2} ${height} ${width * 0.2} ${height * 0.933} Z`} />
-        </clipPath>
-      </defs>
-      <path
-        d={`M${width * 0.1} ${height * 0.067} L${width * 0.9} ${height * 0.067} L${width * 0.8} ${height * 0.933} Q${width * 0.8} ${height} ${width * 0.7} ${height} L${width * 0.3} ${height} Q${width * 0.2} ${height} ${width * 0.2} ${height * 0.933} Z`}
-        fill="none"
-        stroke="#3B82F6"
-        strokeWidth={width * 0.04}
-      />
-      <g clipPath="url(#glass-mask)">
-        <rect
-          x="0"
-          y={height - (level * height) / 100}
-          width={width}
-          height={(level * height) / 100}
-          fill={color}
-          className="transition-all duration-1000 ease-in-out"
-        />
-        <circle className="bubble" cx={width * 0.3} cy={height * 0.8} r={width * 0.02} fill="white" opacity="0.7">
-          <animate attributeName="cy" from={height * 0.8} to={height * 0.133} dur="3s" repeatCount="indefinite" />
-        </circle>
-        <circle className="bubble" cx={width * 0.7} cy={height * 0.933} r={width * 0.03} fill="white" opacity="0.7">
-          <animate attributeName="cy" from={height * 0.933} to={height * 0.267} dur="4s" repeatCount="indefinite" />
-        </circle>
-      </g>
-    </svg>
-  );
+const gradePoints = {
+  "O": 5.0,   // Outstanding
+  "A+": 4.5,
+  "A": 4.0,
+  "B+": 3.5,
+  "B": 3.0,
+  "C+": 2.5,
+  "C": 2.0,
+  "D+": 1.5,
+  "D": 1.0,
+  "F": 0.0    // Fail
 };
 
+function CourseForm({ addCourse, isEdit, initialData, onSave }) {
+  const [courseName, setCourseName] = useState(initialData?.name || "");
+  const [grade, setGrade] = useState(initialData?.grade || "A");
+  const [creditHours, setCreditHours] = useState(initialData?.creditHours || 3);
 
-// Achievement Component
-const Achievement = ({ title, unlocked }) => (
-  <div className={`p-2 rounded-lg text-center ${unlocked ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-400'}`}>
-    {title}
-  </div>
-);
-
-// Main Water Tracker Component
-const WaterTracker = () => {
-  const [goal, setGoal] = useState(2000);
-  const [consumed, setConsumed] = useState(0);
-  const [glassSize, setGlassSize] = useState(200);
-  const [lastDrink, setLastDrink] = useState(Date.now());
-  const [showReminder, setShowReminder] = useState(false);
-  const [achievements, setAchievements] = useState({
-    halfway: false,
-    goalReached: false,
-  });
-
-  // New states for personalization
-  const [weight, setWeight] = useState(70); // default weight
-  const [activityLevel, setActivityLevel] = useState("sedentary");
-  const [climate, setClimate] = useState("moderate");
-
-  useEffect(() => {
-    // Calculate personalized goal based on weight, activity level, and climate
-    const baseIntake = weight * 30; // ml per kg
-    let extraIntake = 0;
-
-    switch (activityLevel) {
-      case "lightly_active":
-        extraIntake = 500;
-        break;
-      case "moderately_active":
-        extraIntake = 1000;
-        break;
-      case "very_active":
-        extraIntake = 1500;
-        break;
-      default:
-        break;
-    }
-
-    switch (climate) {
-      case "hot":
-        extraIntake += 500;
-        break;
-      case "moderate":
-        extraIntake += 250;
-        break;
-      default:
-        break;
-    }
-
-    setGoal(baseIntake + extraIntake);
-  }, [weight, activityLevel, climate]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (Date.now() - lastDrink > 3600000 && consumed < goal) {
-        setShowReminder(true);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (courseName && grade && creditHours) {
+      const courseData = {
+        name: courseName,
+        grade,
+        creditHours: Number(creditHours),
+        gradePoints: gradePoints[grade] * Number(creditHours),
+      };
+      if (isEdit) {
+        onSave(courseData);
+      } else {
+        addCourse(courseData);
       }
-    }, 60000);
-
-    return () => clearInterval(timer);
-  }, [lastDrink, consumed, goal]);
-
-  useEffect(() => {
-    const resetDaily = setInterval(() => {
-      const now = new Date();
-      if (now.getHours() === 0 && now.getMinutes() === 0) {
-        setConsumed(0);
-        setAchievements({ halfway: false, goalReached: false });
-      }
-    }, 60000);
-
-    return () => clearInterval(resetDaily);
-  }, []);
-
-  useEffect(() => {
-    if (consumed >= goal / 2 && !achievements.halfway) {
-      setAchievements(prev => ({ ...prev, halfway: true }));
+      setCourseName("");
+      setGrade("A");
+      setCreditHours(3);
     }
-    if (consumed >= goal && !achievements.goalReached) {
-      setAchievements(prev => ({ ...prev, goalReached: true }));
-    }
-  }, [consumed, goal, achievements]);
-
-  const addWater = () => {
-    const newConsumed = Math.min(consumed + glassSize, goal);
-    setConsumed(newConsumed);
-    setLastDrink(Date.now());
-    setShowReminder(false);
   };
 
-  const reset = () => {
-    setConsumed(0);
-    setAchievements({ halfway: false, goalReached: false });
-  };
-
-  const percentage = (consumed / goal) * 100;
-  const waterColor = `hsl(210, 100%, ${100 - percentage * 0.5}%)`;
+  useEffect(() => {
+    if (isEdit && initialData) {
+      setCourseName(initialData.name);
+      setGrade(initialData.grade);
+      setCreditHours(initialData.creditHours);
+    }
+  }, [isEdit, initialData]);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <Input
+        type="text"
+        value={courseName}
+        onChange={(e) => setCourseName(e.target.value)}
+        placeholder="Course Name"
+        required
+      />
+      <Select value={grade} onValueChange={setGrade}>
+        <SelectTrigger>
+          <SelectValue placeholder="Select a grade" />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.keys(gradePoints).map((g) => (
+            <SelectItem key={g} value={g}>
+              {g}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Input
+        type="number"
+        value={creditHours}
+        onChange={(e) => setCreditHours(e.target.value)}
+        min="1"
+        max="6"
+        required
+      />
+      <Button type="submit" className="w-full">
+        {isEdit ? "Save" : "Add Course"}
+      </Button>
+    </form>
+  );
+}
+
+function CourseList({ courses, editCourse, removeCourse }) {
+  const [isEditDialogOpen, setEditDialogOpen] = useState(false);
+  const [isRemoveDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [currentCourse, setCurrentCourse] = useState(null);
+  const [removeIndex, setRemoveIndex] = useState(null);
+
+  const openEditDialog = (course) => {
+    setCurrentCourse(course);
+    setEditDialogOpen(true);
+  };
+
+  const closeEditDialog = () => {
+    setCurrentCourse(null);
+    setEditDialogOpen(false);
+  };
+
+  const openRemoveDialog = (index) => {
+    setRemoveIndex(index);
+    setRemoveDialogOpen(true);
+  };
+
+  const closeRemoveDialog = () => {
+    setRemoveIndex(null);
+    setRemoveDialogOpen(false);
+  };
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Course Name</TableHead>
+          <TableHead>Grade</TableHead>
+          <TableHead>Credit Hours</TableHead>
+          <TableHead>Grade Points</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {courses.map((course, index) => (
+          <TableRow key={index}>
+            <TableCell>{course.name}</TableCell>
+            <TableCell>{course.grade}</TableCell>
+            <TableCell>{course.creditHours}</TableCell>
+            <TableCell>{course.gradePoints.toFixed(2)}</TableCell>
+            <TableCell>
+              <Button variant="outline" size="sm" className="mr-2" onClick={() => openEditDialog(course)}>
+                Edit
+              </Button>
+              <Button variant="destructive" size="sm" className="mr-2" onClick={() => openRemoveDialog(index)}>
+                Remove
+              </Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Course</DialogTitle>
+            <DialogDescription>
+              Make changes to your course here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          {currentCourse && (
+            <CourseForm
+              isEdit={true}
+              initialData={currentCourse}
+              onSave={(updatedCourse) => {
+                editCourse(courses.indexOf(currentCourse), updatedCourse);
+                closeEditDialog();
+              }}
+            />
+          )}
+          <Button variant="outline" onClick={closeEditDialog}>Cancel</Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Confirmation Dialog */}
+      <Dialog open={isRemoveDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Removal</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove this course?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="submit" onClick={() => {
+              if (removeIndex !== null) {
+                removeCourse(removeIndex);
+              }
+              closeRemoveDialog();
+            }}>
+              Yes, Remove
+            </Button>
+            <Button variant="outline" onClick={closeRemoveDialog}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Table>
+  );
+}
+
+function GPAResult({ gpa }) {
+  return (
+    <Card>
       <CardHeader>
-        <CardTitle className="text-center text-2xl font-bold text-blue-600">
-          Daily Water Intake Tracker
-        </CardTitle>
+        <CardTitle>Your GPA</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-          <Input
-            type="number"
-            value={weight}
-            onChange={(e) => setWeight(Math.max(0, parseInt(e.target.value) || 0))}
-            className="w-full"
-          />
-        </div>
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Activity Level</label>
-          <Select onValueChange={setActivityLevel}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={activityLevel.charAt(0).toUpperCase() + activityLevel.slice(1).replace(/_/g, ' ')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="sedentary">Sedentary</SelectItem>
-              <SelectItem value="lightly_active">Lightly Active</SelectItem>
-              <SelectItem value="moderately_active">Moderately Active</SelectItem>
-              <SelectItem value="very_active">Very Active</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Climate</label>
-          <Select onValueChange={setClimate}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={climate.charAt(0).toUpperCase() + climate.slice(1)} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="cool">Cool</SelectItem>
-              <SelectItem value="moderate">Moderate</SelectItem>
-              <SelectItem value="hot">Hot</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="mb-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Glass Size (ml)</label>
-          <Select onValueChange={(value) => setGlassSize(parseInt(value))}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={glassSize} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="200">200 ml</SelectItem>
-              <SelectItem value="300">300 ml</SelectItem>
-              <SelectItem value="500">500 ml</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <WaterGlass level={percentage} color={waterColor} glassSize={glassSize} />
-        <Progress value={percentage} />
-        <div className="flex justify-between my-4">
-          <span className="font-semibold">Consumed: {consumed} ml</span>
-          <span className="font-semibold">Goal: {goal} ml</span>
-        </div>
-        <Button onClick={addWater} className="w-full mb-2">
-          Add Glass of Water
-        </Button>
-        <Button onClick={reset} className="w-full" variant="destructive">
-          Reset Daily Intake
-        </Button>
+        <p className="text-4xl font-bold">{gpa.toFixed(2)}</p>
       </CardContent>
-      <CardFooter className='flex justify-around items-center'>
-        {achievements.halfway && <Achievement title="Halfway to Goal!" unlocked />}
-        {achievements.goalReached && <Achievement title="Goal Reached!" unlocked />}
-      </CardFooter>
-      {showReminder && (
-        <Toast title="Reminder!" description="It's time to drink water!" />
-      )}
     </Card>
   );
-};
-
+}
 
 export default function App() {
+  const [courses, setCourses] = useState([]);
+  const [gpa, setGPA] = useState(0);
+
+  useEffect(() => {
+    calculateGPA();
+  }, [courses]);
+
+  const addCourse = (course) => {
+    setCourses([...courses, course]);
+  };
+
+  const editCourse = (index, updatedCourse) => {
+    const newCourses = [...courses];
+    newCourses[index] = updatedCourse;
+    setCourses(newCourses);
+  };
+
+  const removeCourse = (index) => {
+    const newCourses = courses.filter((_, i) => i !== index);
+    setCourses(newCourses);
+  };
+
+  const calculateGPA = () => {
+    if (courses.length === 0) {
+      setGPA(0);
+      return;
+    }
+    const totalGradePoints = courses.reduce(
+      (sum, course) => sum + course.gradePoints,
+      0
+    );
+    const totalCreditHours = courses.reduce(
+      (sum, course) => sum + course.creditHours,
+      0
+    );
+    setGPA(totalGradePoints / totalCreditHours);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center p-4">
-      <WaterTracker />
+    <div className="container mx-auto p-4 sm:p-6 max-w-3xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">GPA Calculator</h1>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add Course</CardTitle>
+            <CardDescription>Enter your course details below</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <CourseForm addCourse={addCourse} />
+          </CardContent>
+        </Card>
+        <GPAResult gpa={gpa} />
+      </div>
+      <div className="mt-8">
+        <h2 className="text-2xl font-semibold mb-4">Course List</h2>
+        <CourseList
+          courses={courses}
+          editCourse={editCourse}
+          removeCourse={removeCourse}
+        />
+      </div>
     </div>
   );
 }
