@@ -253,9 +253,9 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      {/* Left Pane */}
-      <div className="w-full md:w-1/4 p-4 bg-gray-100">
+    <div className="flex flex-col lg:flex-row h-screen">
+      {/* Left Pane (Theme, Stickers, and Decorations) */}
+      <div className="w-full lg:w-1/4 p-4 bg-gray-100 overflow-y-auto">
         <h2 className="text-2xl font-bold mb-4">Theme</h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -270,19 +270,17 @@ export default function App() {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Stickers */}
         <h2 className="text-2xl font-bold mt-8 mb-4">Stickers</h2>
         <div className="grid grid-cols-6 gap-2">
           {stickers.map((sticker) => (
-            <span key={sticker} onClick={() => addItem("sticker", sticker)} className={templates[theme].stickerColor}>
+            <span key={sticker} onClick={() => addItem("sticker", sticker)} className={`text-2xl ${templates[theme].stickerColor}`}>
               {sticker}
             </span>
           ))}
         </div>
 
-        {/* Decoration Assets */}
         <h2 className="text-2xl font-bold mt-8 mb-4">Decorations</h2>
-        <div className="grid grid-cols-3 gap-2 overflow-y-scroll max-h-[300px]">
+        <div className="grid grid-cols-3 gap-2 max-h-[300px] overflow-y-auto">
           {decorations.map((decoration, index) => (
             <div
               key={index}
@@ -290,7 +288,7 @@ export default function App() {
               onMouseEnter={() => setItemToDelete(decoration)}
               onMouseLeave={() => setItemToDelete(null)}
             >
-              <img src={decoration} alt="Decoration" className="cursor-pointer" onClick={() => addItem("image", decoration)} />
+              <img src={decoration} alt="Decoration" className="cursor-pointer w-full h-auto" onClick={() => addItem("image", decoration)} />
             </div>
           ))}
         </div>
@@ -299,22 +297,22 @@ export default function App() {
           placeholder="Add decoration image URL"
           value={decorationImageUrl}
           onChange={(e) => setDecorationImageUrl(e.target.value)}
+          className="mt-2"
         />
-        <Button className="mt-2" onClick={() => addDecoration(decorationImageUrl)}>
+        <Button className="mt-2 w-full" onClick={() => addDecoration(decorationImageUrl)}>
           Add Decoration
         </Button>
       </div>
 
-      {/* Canvas */}
-      <div id="canvas" className={`w-full md:w-1/2 p-4 ${templates[theme].bg} ${templates[theme].text} relative overflow-hidden`}>
+      {/* Canvas (Middle Pane) */}
+      <div id="canvas" className={`flex-grow min-h-[50vh] lg:min-h-0 lg:h-full p-4 ${templates[theme].bg} ${templates[theme].text} relative overflow-hidden`}>
         {items.map((item) => (
           <ScrapbookItem key={item.id} item={item} onUpdate={updateItem} onDelete={(item) => handleDeleteRequest(item, 'canvas')} onSelect={setSelectedItem} />
         ))}
       </div>
 
-
-      {/* Right Pane */}
-      <div className="w-full md:w-1/4 p-4 bg-gray-100">
+      {/* Right Pane (Controls and Settings) */}
+      <div className="w-full lg:w-1/4 p-4 bg-gray-100 overflow-y-auto">
         <h2 className="text-2xl font-bold mb-4">Add Image</h2>
         <Input
           type="text"
@@ -322,36 +320,35 @@ export default function App() {
           value={canvasImageUrl}
           onChange={(e) => setCanvasImageUrl(e.target.value)}
         />
-        <Button className="mt-2" onClick={() => addItem("image", canvasImageUrl)}>
+        <Button className="mt-2 w-full" onClick={() => addItem("image", canvasImageUrl)}>
           Add Image
         </Button>
 
         <h2 className="text-2xl font-bold mt-4 mb-4">Add Text</h2>
         <Input type="text" placeholder="Enter text" value={text} onChange={(e) => setText(e.target.value)} />
-        <Button className="mt-2" onClick={() => addItem("text", text)}>
+        <Button className="mt-2 w-full" onClick={() => addItem("text", text)}>
           Add Text
         </Button>
 
         {selectedItem ? (
           <>
-            <h2 className="text-2xl font-bold mt-4 mb-4">Settings</h2>
-            <div className="overflow-y-scroll max-h-[400px]">
+            <h2 className="text-2xl font-bold mt-8 mb-4">Settings</h2>
+            <div className="space-y-4">
               {/* Rotation */}
-              <div className="mb-4">
+              <div>
                 <label className="block font-bold mb-2">Rotation</label>
                 <Slider value={[selectedItem.rotation]} min={0} max={360} onValueChange={(value) => handleSettingChange("rotation", value[0])} />
               </div>
 
-
               {selectedItem.type === "image" && (
                 <>
                   {/* Size */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Size</label>
                     <Slider value={[selectedItem.size]} min={50} max={500} onValueChange={(value) => handleSettingChange("size", value[0])} />
                   </div>
                   {/* Border Radius (for images) */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Border Radius</label>
                     <Slider value={[selectedItem.borderRadius || 0]} min={0} max={50} onValueChange={(value) => handleSettingChange("borderRadius", value[0])} />
                   </div>
@@ -359,7 +356,7 @@ export default function App() {
               )}
 
               {/* Opacity */}
-              <div className="mb-4">
+              <div>
                 <label className="block font-bold mb-2">Opacity</label>
                 <Slider value={[selectedItem.opacity || 1]} min={0.1} max={1} step={0.1} onValueChange={(value) => handleSettingChange("opacity", value[0])} />
               </div>
@@ -367,48 +364,38 @@ export default function App() {
               {/* Font Settings (for text) */}
               {selectedItem.type === "text" && (
                 <>
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Font Size</label>
                     <Slider value={[selectedItem.fontSize || 16]} min={12} max={100} onValueChange={(value) => handleSettingChange("fontSize", value[0])} />
                   </div>
 
                   {/* Size */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Size</label>
                     <Slider value={[selectedItem.size]} min={50} max={500} onValueChange={(value) => handleSettingChange("size", value[0])} />
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block font-bold mb-2">Padding Top</label>
-                    <Slider value={[selectedItem.paddingTop]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingTop", value[0])} />
+                  <div>
+                    <label className="block font-bold mb-2">Padding</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Slider value={[selectedItem.paddingTop]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingTop", value[0])} />
+                      <Slider value={[selectedItem.paddingBottom]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingBottom", value[0])} />
+                      <Slider value={[selectedItem.paddingLeft]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingLeft", value[0])} />
+                      <Slider value={[selectedItem.paddingRight]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingRight", value[0])} />
+                    </div>
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block font-bold mb-2">Padding Bottom</label>
-                    <Slider value={[selectedItem.paddingBottom]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingBottom", value[0])} />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block font-bold mb-2">Padding Left</label>
-                    <Slider value={[selectedItem.paddingLeft]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingLeft", value[0])} />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block font-bold mb-2">Padding Right</label>
-                    <Slider value={[selectedItem.paddingRight]} min={1} max={20} onValueChange={(value) => handleSettingChange("paddingRight", value[0])} />
-                  </div>
-
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Font Color</label>
                     <Input type="color" value={selectedItem.fontColor || "#000000"} onChange={(e) => handleSettingChange("fontColor", e.target.value)} />
                   </div>
 
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Background Color</label>
                     <Input type="color" value={selectedItem.bgColor || "#ffffff"} onChange={(e) => handleSettingChange("bgColor", e.target.value)} />
                   </div>
 
-                  <div className="mb-4">
+                  <div>
                     <label className="block font-bold mb-2">Border Radius</label>
                     <Slider value={[selectedItem.borderRadius || 0]} min={0} max={50} onValueChange={(value) => handleSettingChange("borderRadius", value[0])} />
                   </div>
@@ -417,8 +404,9 @@ export default function App() {
             </div>
           </>
         ) : (
-          <h6 className="mt-4" >Select an item to edit its settings.</h6>
+          <h6 className="mt-4">Select an item to edit its settings.</h6>
         )}
+        
         <Button className="mt-8 w-full" onClick={exportScrapbook}>
           Export Scrapbook
         </Button>
@@ -440,4 +428,4 @@ export default function App() {
       </Dialog>
     </div>
   );
-}
+};
