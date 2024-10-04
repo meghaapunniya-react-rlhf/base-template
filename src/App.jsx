@@ -72,7 +72,7 @@ const AssetLibrary = ({ onSelectAsset }) => {
   );
 };
 
-const ComicFrame = ({ frame, onUpdateFrame, isDrawing, drawingTool, onDraw, onUndoRedoDraw }) => {
+const ComicFrame = ({ frame, onUpdateFrame, isDrawing, drawingTool, onDraw }) => {
   const canvasRef = useRef(null);
   const [isDrawingInFrame, setIsDrawingInFrame] = useState(false);
 
@@ -123,7 +123,6 @@ const ComicFrame = ({ frame, onUpdateFrame, isDrawing, drawingTool, onDraw, onUn
       setIsDrawingInFrame(false);
       const canvas = canvasRef.current;
       onUpdateFrame({ ...frame, drawing: canvas.toDataURL() });
-      onUndoRedoDraw();
     }
   };
 
