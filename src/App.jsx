@@ -255,7 +255,7 @@ export default function App() {
   return (
     <div className="flex flex-col lg:flex-row h-screen">
       {/* Left Pane (Theme, Stickers, and Decorations) */}
-      <div className="w-full lg:w-1/4 p-4 bg-gray-100 overflow-y-auto">
+      <div className="w-full h-[100%] lg:w-1/4 p-4 bg-gray-100 overflow-y-auto">
         <h2 className="text-2xl font-bold mb-4">Theme</h2>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -305,7 +305,7 @@ export default function App() {
       </div>
 
       {/* Canvas (Middle Pane) */}
-      <div id="canvas" className={`flex-grow min-h-[50vh] lg:min-h-0 lg:h-full p-4 ${templates[theme].bg} ${templates[theme].text} relative overflow-hidden`}>
+      <div id="canvas" className={`flex-grow  lg:mt-0 min-h-[50vh] lg:min-h-0 lg:h-full p-4 ${templates[theme].bg} ${templates[theme].text} relative overflow-hidden`}>
         {items.map((item) => (
           <ScrapbookItem key={item.id} item={item} onUpdate={updateItem} onDelete={(item) => handleDeleteRequest(item, 'canvas')} onSelect={setSelectedItem} />
         ))}
