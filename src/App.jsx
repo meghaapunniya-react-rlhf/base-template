@@ -7,7 +7,6 @@ import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
 
-
 const presetBackgrounds = [
   { id: "bg1", color: "bg-blue-200" },
   { id: "bg2", color: "bg-green-200" },
@@ -30,7 +29,6 @@ const AssetLibrary = ({ onSelectAsset }) => {
   };
 
   return (
-
     <Tabs defaultValue="backgrounds">
       <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
@@ -80,7 +78,7 @@ const ComicFrame = ({ frame, onUpdateFrame, isDrawing, drawingTool, onDraw, onUn
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (frame.drawing) {
       const img = new Image();
@@ -202,7 +200,6 @@ const DialogueEditor = ({ frame, onUpdateFrame }) => {
   );
 };
 
-
 const PositionControl = ({ position, onUpdate, label }) => (
   <div className="mb-4">
     <h3 className="text-sm font-medium mb-2">{label} Position</h3>
@@ -256,32 +253,38 @@ export default function App() {
 
   useEffect(() => {
     if (JSON.stringify(frames) !== JSON.stringify(history[historyIndex])) {
-      setHistory(prevHistory => [...prevHistory.slice(0, historyIndex + 1), frames]);
-      setHistoryIndex(prevIndex => prevIndex + 1);
+      setHistory((prevHistory) => [...prevHistory.slice(0, historyIndex + 1), frames]);
+      setHistoryIndex((prevIndex) => prevIndex + 1);
     }
-  }, [frames, history, historyIndex]);
+  }, [frames]);
 
   const handleSelectAsset = (type, asset) => {
-    const updatedFrames = [...frames];
-    updatedFrames[selectedFrame] = { ...updatedFrames[selectedFrame], [type]: asset };
-    setFrames(updatedFrames);
+    setFrames((prevFrames) => {
+      const updatedFrames = [...prevFrames];
+      updatedFrames[selectedFrame] = { ...updatedFrames[selectedFrame], [type]: asset };
+      return updatedFrames;
+    });
   };
 
   const handleUpdateFrame = (updatedFrame) => {
-    const updatedFrames = [...frames];
-    updatedFrames[selectedFrame] = updatedFrame;
-    setFrames(updatedFrames);
+    setFrames((prevFrames) => {
+      const updatedFrames = [...prevFrames];
+      updatedFrames[selectedFrame] = updatedFrame;
+      return updatedFrames;
+    });
   };
 
   const addFrame = () => {
-    setFrames([...frames, { id: frames.length + 1, drawing: null }]);
+    setFrames((prevFrames) => [...prevFrames, { id: prevFrames.length + 1, drawing: null }]);
   };
 
   const removeFrame = (index) => {
     if (frames.length > 1) {
-      const updatedFrames = frames.filter((_, i) => i !== index);
-      setFrames(updatedFrames);
-      setSelectedFrame(Math.min(selectedFrame, updatedFrames.length - 1));
+      setFrames((prevFrames) => {
+        const updatedFrames = prevFrames.filter((_, i) => i !== index);
+        setSelectedFrame(Math.min(selectedFrame, updatedFrames.length - 1));
+        return updatedFrames;
+      });
     }
   };
 
@@ -300,10 +303,10 @@ export default function App() {
   };
 
   const handleDraw = (canvas, x, y, isDrawing) => {
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = drawingTool === 'eraser' ? '#e5e7eb' : '#000000';
+    ctx.lineCap = "round";
+    ctx.strokeStyle = drawingTool === "eraser" ? "#e5e7eb" : "#000000";
 
     if (isDrawing) {
       ctx.lineTo(x, y);
@@ -316,16 +319,21 @@ export default function App() {
 
   const handleUndo = () => {
     if (historyIndex > 0) {
-      setHistoryIndex(prevIndex => prevIndex - 1);
+      setHistoryIndex((prevIndex) => prevIndex - 1);
       setFrames(history[historyIndex - 1]);
     }
   };
 
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
-      setHistoryIndex(prevIndex => prevIndex + 1);
+      setHistoryIndex((prevIndex) => prevIndex + 1);
       setFrames(history[historyIndex + 1]);
     }
+  };
+
+  const toggleEditMode = (mode) => {
+    setEditMode(mode);
+    setIsDrawing(mode === "draw");
   };
 
   return (
@@ -346,11 +354,11 @@ export default function App() {
               <CardTitle>Edit Mode</CardTitle>
             </CardHeader>
             <CardContent>
-              <ToggleGroup type="single" value={editMode} onValueChange={setEditMode}>
+              <ToggleGroup type="single" value={editMode} onValueChange={toggleEditMode}>
                 <ToggleGroupItem value="asset" aria-label="Asset">
                   Asset
                 </ToggleGroupItem>
-                <ToggleGroupItem value="draw" aria-label="Draw" onClick={() => setIsDrawing(true)}>
+                <ToggleGroupItem value="draw" aria-label="Draw">
                   Draw
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -425,9 +433,10 @@ export default function App() {
               <div ref={comicRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {frames.map((frame, index) => (
                   <Card
-                    key={frame.id}
-                    className={`cursor-pointer transition-all duration-200 ${selectedFrame === index ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
-                      }`}
+                    key={index}
+                    className={`cursor-pointer transition-all duration-200 ${
+                      selectedFrame === index ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
+                    }`}
                     onClick={() => setSelectedFrame(index)}
                   >
                     <CardContent className="p-2">
@@ -445,7 +454,9 @@ export default function App() {
             </CardContent>
           </Card>
           <div className="flex flex-col sm:flex-row justify-around mb-6">
-            <Button onClick={addFrame} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 mb-2 sm:mb-0">Add Frame</Button>
+            <Button onClick={addFrame} className="w-full sm:w-auto bg-green-500 hover:bg-green-600 mb-2 sm:mb-0">
+              Add Frame
+            </Button>
             {frames.length > 1 && (
               <Button
                 onClick={() => removeFrame(selectedFrame)}
@@ -455,7 +466,9 @@ export default function App() {
                 Remove Frame
               </Button>
             )}
-            <Button onClick={handleExport} className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 mb-2 sm:mb-0">Export</Button>
+            <Button onClick={handleExport} className="w-full sm:w-auto bg-purple-500 hover:bg-purple-600 mb-2 sm:mb-0">
+              Export
+            </Button>
             <Button
               onClick={handleUndo}
               disabled={historyIndex === 0}
@@ -478,10 +491,7 @@ export default function App() {
                 <CardTitle>Dialogue Editor</CardTitle>
               </CardHeader>
               <CardContent>
-                <DialogueEditor
-                  frame={frames[selectedFrame]}
-                  onUpdateFrame={handleUpdateFrame}
-                />
+                <DialogueEditor frame={frames[selectedFrame]} onUpdateFrame={handleUpdateFrame} />
               </CardContent>
             </Card>
           )}
